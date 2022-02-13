@@ -3,16 +3,14 @@ const winW = window.innerWidth;
 const winH = window.innerHeight;
 const mapScale = 0.30;
 var centerPt = [0.0, 0.0];
-var projection = d3.geoEquirectangular();
+var projection;
 
 // Set up the map.
 const mapContainer = d3.select("#map-container");
 const mapPath = "./data/MC2-tourist.jpg";
 mapContainer.append("img")
   .attr("id", "map-img")
-  .attr("src", mapPath)
-  .attr("width", 800)   // Temp height and width.
-  .attr("height", 600);
+  .attr("src", mapPath);
 
 // Scale map image to a reasonable size.
 const mapImg = document.getElementById("map-img");
@@ -40,10 +38,10 @@ d3.csv("./data/gps.csv")
       let maxLon = Number(value[3]);
       let centerLat = (minLat + maxLat) / 2.0;
       let centerLon = (minLon + maxLon) / 2.0;
-      projection
-        .scale(500000) // TODO validate this value to ensure points are correct.
-        .center([centerLon, centerLat]);
-      let path = d3.geoPath().projection(projection);
+      projection = d3.geoEquirectangular()
+        .center([centerLon, centerLat])
+        .translate([mapImg.width / 2, mapImg.height / 2])
+        .scale(500000); // TODO not confirmed correct.
 
       // Set up the svg layer where points will be added.
       let svg = mapContainer.append("svg")
@@ -53,23 +51,6 @@ d3.csv("./data/gps.csv")
         .attr("style", "background: url('" + mapPath + "') no-repeat;background-size: contain;");
       svg.lower();
       mapImg.remove();
-
-      // Calculate the center point. Leaving as an example for now.
-      centerPt = [centerLon, centerLat];
-      //console.log("CenterPt:");
-      //console.log(centerPt);
-      //svg.selectAll("circle")
-      //  .data([centerPt,]).enter()
-      //  .append("circle")
-      //  .attr("cx", function (d) {
-      //    return projection(d)[0];
-      //  })
-      //  .attr("cy", function (d) {
-      //    return projection(d)[1];
-      //  })
-      //  .attr("r", "10px")
-      //  .attr("fill", "red");
-      //console.log("added first set of pts...");
 
       addRandomPoints(data).then((value) => {
         console.log("added points");
@@ -128,23 +109,64 @@ async function addRandomPoints(data) {
         idx === num4 ||
         idx === num5)
     {
-      var pt = [Number(item.long), Number(item.lat)];
+      var pt = new Object();
+      pt.coord = [Number(item.long), Number(item.lat)];
+      pt.id = item.id;
+      pt.date = item.Timestamp;
       pts.push(pt);
     }
     idx = idx + 1;
   }
+
+  /*
+   * Tooltip code: https://techblog.assignar.com/plotting-data-points-on-
+   * interactive-map-visualisation-using-d3js/
+   */
+  let tooltip = d3.select("#map-container")
+    .append("div")
+    .attr("id", "tooltip")
+    .style("position", "absolute")
+    .style("text-align", "left")
+    .style("padding", "15px")
+    .style("font", "12px sans-serif")
+    .style("background", "#ffffff")
+    .style("border", "0px")
+    .style("border-radius", "8px")
+    .style("z-index", "10")
+    .style("visibility", "hidden")
+    .text("empty tooltip");
+
   svg.selectAll("circle")
-        //.Why doesn't this work just passing [pts]?
-        .data([pts[0], pts[1], pts[2], pts[3], pts[4]]).enter()
+        .data(pts).enter()
         .append("circle")
         .attr("cx", function (d) {
-          console.log(projection(d));
-          return projection(d)[0];
+          console.log("cx: " + d.coord[0]);
+          console.log(projection(d.coord));
+          return projection(d.coord)[0];
         })
         .attr("cy", function (d) {
-          console.log(projection(d));
-          return projection(d)[1];
+          console.log("cy: " + d.coord[1]);
+          console.log(projection(d.coord));
+          return projection(d.coord)[1];
         })
         .attr("r", "10px")
-        .attr("fill", "red");
+        .attr("fill", "red")
+        .on("mouseover", (e, d) => {
+          let idText = 'ID: ' + d.id;
+          let dateText = '<br>Date: ' + d.date;
+          let latText = '<br>Lat: ' + d.coord[1];
+          let lonText = '<br>Lon: ' + d.coord[0];
+          tooltip.html(idText + dateText + latText + lonText);
+          tooltip.style("visibility", "visible");
+          tooltip.style("top",
+            (e.pageY - 10) + "px")
+            .style("left", (e.pageX + 10) + "px");
+          d3.select("#tooltip").lower();
+          return tooltip;
+        })
+        .on("mouseleave", (e, d) => {
+          tooltip.raise();
+          tooltip.text("empty tooltip");
+          tooltip.style("visibility", "hidden");
+        });
 }
