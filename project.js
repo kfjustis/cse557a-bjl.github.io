@@ -24,3 +24,46 @@ mapContainer.append("img")
 //d3.csv("./data/gps.csv")
 //  .row(function(d) { return {key: d.key, value: d.value}; })
 //  .get(function(error, rows) { console.log(rows); });
+
+
+d3.csv("data/employee-data.csv")
+  .then(function(employeeData) {
+
+    console.log(employeeData);
+
+    let employeeDropdown = document.getElementById("employee-dropdown");
+
+    let dropdownLabel = document.createElement("label");
+    dropdownLabel.innerHTML = "Select an employee";
+    dropdownLabel.htmlFor = "employees";
+
+    let allOption = document.createElement("option");
+    allOption.value = "All Employees";
+    allOption.text = "All Employees";
+    employeeDropdown.append(allOption);
+
+    for (i = 0; i < employeeData.length; i++) {
+        let option = document.createElement("option");
+        option.value = employeeData[i].FirstName + " " + employeeData[i].LastName;
+        option.text = employeeData[i].FirstName + " " + employeeData[i].LastName;
+        employeeDropdown.append(option);
+    }
+
+    employeeDropdown.addEventListener('change', function() {
+      let selectedEmployee;
+      if (this.value == "all") {
+        selectedEmployee = ["All", "Names"];
+      }
+      else {
+        selectedEmployee = this.value.split(" ");
+      }    
+      console.log(selectedEmployee);
+      d3.csv("data/gps.csv")
+        .then(function(gpsData) {
+          let gpsVis = new GPSVis(gpsData, employeeData, selectedEmployee);
+          gpsVis.update();
+        })
+
+    })
+  })
+
