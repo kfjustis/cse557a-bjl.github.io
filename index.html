@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="utf-8">
@@ -8,13 +8,81 @@
     </head>
     <body>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <p>Select an Employee:</p>
-    <select id="employee-dropdown" name = "employees"></select>
-    <div id="map-container"></div>
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
     <script type="text/javascript" src="project.js" defer></script>
     <script type="text/javascript" src="carVis.js" defer></script>
     <script type="text/javascript" src="gpsVis.js" defer></script>
-
-    <button type="button" class="btn btn-primary">Primary</button>
+    <div class="container mt-2 pt-4">
+        <div class="row justify-content-md-center">
+          <div class="col col-lg-2">
+            <p>Select an Employee:</p>
+            <select class="form-select" id="employee-dropdown" name="employees"></select>
+            <div class="list-group mt-4">
+                <label class="list-group-item">
+                  <input class="form-check-input me-1" type="checkbox" value="">
+                  First checkbox
+                </label>
+                <label class="list-group-item">
+                  <input class="form-check-input me-1" type="checkbox" value="">
+                  Second checkbox
+                </label>
+                <label class="list-group-item">
+                  <input class="form-check-input me-1" type="checkbox" value="">
+                  Third checkbox
+                </label>
+                <label class="list-group-item">
+                  <input class="form-check-input me-1" type="checkbox" value="">
+                  Fourth checkbox
+                </label>
+                <label class="list-group-item">
+                  <input class="form-check-input me-1" type="checkbox" value="">
+                  Fifth checkbox
+                </label>
+              </div>
+          </div>
+          <div class="col-md-auto">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active" id="home-tab" data-toggle="tab" href="#individual" role="tab" aria-controls="home" aria-selected="true">Individual</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="profile-tab" data-toggle="tab" href="#aggregate" role="tab" aria-controls="profile" aria-selected="false">Aggregate</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" id="contact-tab" data-toggle="tab" href="#loyalty" role="tab" aria-controls="contact" aria-selected="false">Loyalty</a>
+                </li>
+            </ul>
+            <div class="tab-content" id="myTabContent">
+                <div class="tab-pane fade show active" id="individual" role="tabpanel" aria-labelledby="home-tab">
+                    <div id="map-container"></div>
+                </div>
+                <div class="tab-pane fade" id="aggregate" role="tabpanel" aria-labelledby="profile-tab">
+                    2
+                </div>
+                <div class="tab-pane fade" id="loyalty" role="tabpanel" aria-labelledby="contact-tab">
+                    3
+                </div>
+            </div>
+          </div>
+          <div class="col col-lg-2">
+            <div class="list-group">
+                <a href="#" class="list-group-item">
+                  <p class="mb-1">Person X</p>
+                  <small>Info here</small>
+                </a>
+                <a href="#" class="list-group-item">
+                  <p class="mb-1">Person Y</p>
+                  <small>Info here</small>
+                </a>
+                <a href="#" class="list-group-item">
+                  <p class="mb-1">Person Z</p>
+                  <small>Info here</small>
+                </a>
+              </div>
+          </div>
+        </div>
+      </div>
     </body>
 </html>
