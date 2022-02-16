@@ -32,6 +32,7 @@ d3.csv("data/employee-data.csv")
     console.log(employeeData);
 
     let employeeDropdown = document.getElementById("employee-dropdown");
+    let employeeSelect = document.getElementById("employee-list");
 
     let dropdownLabel = document.createElement("label");
     dropdownLabel.innerHTML = "Select an employee";
@@ -48,6 +49,21 @@ d3.csv("data/employee-data.csv")
         option.text = employeeData[i].FirstName + " " + employeeData[i].LastName;
         employeeDropdown.append(option);
     }
+
+    // Adding code here to add other checkpoint elements
+    for (i = 0; i < employeeData.length; i++) {
+      let label = document.createElement("label");
+      label.className = "list-group-item";
+      // let input = document.createElement("input");
+      // input.className = "form-check-input me-1";
+      // input.type = "checkbox"
+      let inputLabel = "" + employeeData[i].FirstName + " " + employeeData[i].LastName;
+      // input.setAttribute("value", inputLabel);
+      // input.value = inputLabel;
+      // label.append(input);
+      label.innerHTML = "<input class=\"form-check-input me-1\" type=\"checkbox\" value=\"\"></input>" + inputLabel
+      employeeSelect.append(label);
+  }
 
     employeeDropdown.addEventListener('change', function() {
       let selectedEmployee;
