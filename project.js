@@ -28,7 +28,17 @@ mapImg.onload = function() {
 const pageAlert = d3.select("#page-alert");
 pageAlert.text("Loading page data...");
 
-// Data objects. Ranked by size (lower idx = larger).
+// Init. page state here that doesn't rely on CSV data.
+$(document).ready(
+      function() {
+        initDatePickers();
+      }
+  );
+
+/*
+ * Data objects ranked by size; lower index means larger
+ * file size.
+ */
 var g_gpsData;           // 1
 var g_ccData;            // 2
 var g_loyaltyData;       // 3
@@ -75,12 +85,43 @@ function onDataReady() {
   initEmployeeColumn(g_employeeData);
   populateMapData(g_gpsData);
 
+  // Update the page alert now that all loading is done.
   pageAlert.text("Refresh page to show new random data points. \
                  Hover over each point to show GPS data.");
 }
 
-function initEmployeeColumn(employeeData)
-{
+function initDatePickers() {
+  /*
+   * Hard-code the datepicker settings since the CSV data gets
+   * loaded afterwards.
+   */
+  let defaultStartDate = "01/06/2014";
+  let defaultEndDate = "01/19/2014";
+  $("#datepickerFrom").val(defaultStartDate);
+  $("#datepickerTo").val(defaultEndDate);
+  $("#datepickerFrom").datepicker(
+    {
+      defaultDate: defaultStartDate,
+      minDate: defaultStartDate,
+      maxDate: defaultEndDate,
+      onClose: function(dateText, inst) {
+          console.log("From date: " + dateText);
+      }
+    }
+  );
+  $("#datepickerTo").datepicker(
+    {
+      defaultDate: defaultEndDate,
+      minDate: defaultStartDate,
+      maxDate: defaultEndDate,
+      onClose: function(dateText, inst) {
+          console.log("To date: " + dateText);
+      }
+    }
+  );
+}
+
+function initEmployeeColumn(employeeData) {
   console.log(employeeData);
 
   let employeeDropdown = document.getElementById("employee-dropdown");
@@ -127,8 +168,7 @@ function initEmployeeColumn(employeeData)
   });
 }
 
-function populateMapData(gpsData)
-{
+function populateMapData(gpsData) {
   // Spawn random points.
   getCoordMinMax(gpsData).then((value) => {
     // value format:
