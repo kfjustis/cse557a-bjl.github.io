@@ -1,0 +1,8 @@
+#employee-col {
+   padding-right:  0px;
+}
+
+#employee-list {
+   max-height: 500px;
+   overflow:  scroll;
+}
