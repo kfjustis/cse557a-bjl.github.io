@@ -19,79 +19,113 @@ mapImg.onload = function() {
     {
       mapImg.width = mapImg.naturalWidth * mapScale;
       mapImg.height = mapImg.naturalHeight * mapScale;
-      console.log("mapwidth: " + mapImg.width);
-      console.log("mapheight: " + mapImg.height);
+      console.log("Map width: " + mapImg.width);
+      console.log("Map height: " + mapImg.height);
     }
 }
 
-//d3.csv("./data/gps.csv")
-//  .row(function(d) { return {key: d.key, value: d.value}; })
-//  .get(function(error, rows) { console.log(rows); });
+// Set the page alert to indicate loading...
+const pageAlert = d3.select("#page-alert");
+pageAlert.text("Loading page data...");
+
+// Data objects. Ranked by size (lower idx = larger).
+var g_gpsData;           // 1
+var g_ccData;            // 2
+var g_loyaltyData;       // 3
+var g_carAssignmentData; // 4
+var g_employeeData;      // 5
+
+// Preload all of the data.
+d3.csv("data/gps.csv")
+  .then(function(gpsData) {
+    g_gpsData = gpsData;
+
+    d3.csv("data/cc_data.csv")
+      .then(function(ccData) {
+        g_ccData = ccData;
+
+        d3.csv("data/loyalty_data.csv")
+          .then(function(loyaltyData) {
+            g_loyaltyData = loyaltyData;
+
+            d3.csv("data/car-assignments.csv")
+              .then(function(carData) {
+                g_carAssignmentData = carData;
+
+                d3.csv("data/employee-data.csv")
+                  .then(function(employeeData) {
+                    g_employeeData = employeeData;
+
+                    onDataReady();
+                });
+            });
+        });
+    });
+});
 
 
-d3.csv("data/employee-data.csv")
-  .then(function(employeeData) {
+/*
+ * This function fires when all data is guaranteed to be
+ * available in the window. Use the g_ vars to retrieve
+ * any of the CSV data.
+ */
+function onDataReady() {
+  console.log("Page data is ready.");
 
-    console.log(employeeData);
+  initEmployeeColumn(g_employeeData);
+  populateMapData(g_gpsData);
 
-    let employeeDropdown = document.getElementById("employee-dropdown");
-    let employeeSelect = document.getElementById("employee-list");
+  pageAlert.text("Refresh page to show new random data points. \
+                 Hover over each point to show GPS data.");
+}
 
-    let dropdownLabel = document.createElement("label");
-    dropdownLabel.innerHTML = "Select an employee";
-    dropdownLabel.htmlFor = "employees";
+function initEmployeeColumn(employeeData)
+{
+  console.log(employeeData);
 
-    let allOption = document.createElement("option");
-    allOption.value = "All Employees";
-    allOption.text = "All Employees";
-    employeeDropdown.append(allOption);
+  let employeeDropdown = document.getElementById("employee-dropdown");
+  let employeeSelect = document.getElementById("employee-list");
 
-    for (i = 0; i < employeeData.length; i++) {
-        let option = document.createElement("option");
-        option.value = employeeData[i].FirstName + " " + employeeData[i].LastName;
-        option.text = employeeData[i].FirstName + " " + employeeData[i].LastName;
-        employeeDropdown.append(option);
+  let dropdownLabel = document.createElement("label");
+  dropdownLabel.innerHTML = "Select an employee";
+  dropdownLabel.htmlFor = "employees";
+
+  let allOption = document.createElement("option");
+  allOption.value = "All Employees";
+  allOption.text = "All Employees";
+  employeeDropdown.append(allOption);
+
+  // Add all employee entries to the dropdown.
+  for (i = 0; i < employeeData.length; i++) {
+      let option = document.createElement("option");
+      option.value = employeeData[i].FirstName + " " + employeeData[i].LastName;
+      option.text = employeeData[i].FirstName + " " + employeeData[i].LastName;
+      employeeDropdown.append(option);
+  }
+
+  // Add all employees to the checklist panel so multiple can be selected.
+  for (i = 0; i < employeeData.length; i++) {
+    let label = document.createElement("label");
+    label.className = "list-group-item";
+    let inputLabel = "" + employeeData[i].FirstName + " " + employeeData[i].LastName;
+    label.innerHTML = "<input class=\"form-check-input me-1\" type=\"checkbox\" value=\"\"></input>" + inputLabel
+    employeeSelect.append(label);
+  }
+
+  // Generate a GPSVis when all / single employee selected.
+  employeeDropdown.addEventListener('change', function() {
+    let selectedEmployee;
+    if (this.value == "all") {
+      selectedEmployee = ["All", "Names"];
     }
-
-    // Adding code here to add other checkpoint elements
-    for (i = 0; i < employeeData.length; i++) {
-      let label = document.createElement("label");
-      label.className = "list-group-item";
-      // let input = document.createElement("input");
-      // input.className = "form-check-input me-1";
-      // input.type = "checkbox"
-      let inputLabel = "" + employeeData[i].FirstName + " " + employeeData[i].LastName;
-      // input.setAttribute("value", inputLabel);
-      // input.value = inputLabel;
-      // label.append(input);
-      label.innerHTML = "<input class=\"form-check-input me-1\" type=\"checkbox\" value=\"\"></input>" + inputLabel
-      employeeSelect.append(label);
+    else {
+      selectedEmployee = this.value.split(" ");
     }
-
-    employeeDropdown.addEventListener('change', function() {
-      let selectedEmployee;
-      if (this.value == "all") {
-        selectedEmployee = ["All", "Names"];
-      }
-      else {
-        selectedEmployee = this.value.split(" ");
-      }    
-      console.log(selectedEmployee);
-      d3.csv("data/gps.csv")
-        .then(function(gpsData) {
-          let gpsVis = new GPSVis(gpsData, employeeData, selectedEmployee);
-          gpsVis.update();
-        }); // End of reading gps data from csv.
-    }); // End of employee dropdown event listener.
-
-    // Read GPS data on page load to populate map with points.
-      // TODO cache this on page load so that 'employeeDropdown'
-      // doesn't re-read this.
-    d3.csv("data/gps.csv")
-      .then(function(gpsData) {
-        populateMapData(gpsData);
-      });
-  }); // End of reading employee data from csv.
+    console.log(selectedEmployee);
+    let gpsVis = new GPSVis(g_gpsData, g_employeeData, selectedEmployee);
+    gpsVis.update();
+  });
+}
 
 function populateMapData(gpsData)
 {
@@ -124,9 +158,9 @@ function populateMapData(gpsData)
     mapImg.remove();
 
     addRandomPoints(gpsData).then((value) => {
-      console.log("added points");
+      // Do stuff.
     });
-  }); // End of GetCoordMinMax
+  });
 }
 
 // Async determine lat/lon min/max values.
