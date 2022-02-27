@@ -2,8 +2,12 @@
 const winW = window.innerWidth;
 const winH = window.innerHeight;
 const mapScale = 0.30;
+const maxDataPoints = 10000;
 var centerPt = [0.0, 0.0];
 var projection;
+
+// Array containing currently-selected employee names.
+var g_CheckedEmployees = [];
 
 // Set up the map.
 const mapContainer = d3.select("#map-container");
@@ -32,6 +36,10 @@ pageAlert.text("Loading page data...");
 $(document).ready(
       function() {
         initDatePickers();
+        initTimePickers();
+        // Disabled/hidden until page data loads.
+        $("#btnUpdateMap").prop("disabled",true);
+        $("#btnUpdateMap").hide();
       }
   );
 
@@ -80,14 +88,17 @@ d3.csv("data/gps.csv")
  * any of the CSV data.
  */
 function onDataReady() {
-  console.log("Page data is ready.");
-
   initEmployeeColumn(g_employeeData);
-  populateMapData(g_gpsData);
+  initMapButton();
+  initMapSvgLayer(g_gpsData);
+
+  // Now we can enable the update button.
+  $("#btnUpdateMap").prop("disabled",false);
+  $("#btnUpdateMap").show();
 
   // Update the page alert now that all loading is done.
-  pageAlert.text("Refresh page to show new random data points. \
-                 Hover over each point to show GPS data.");
+  pageAlert.text("Specify a query by selecting employees and a datetime range. \
+                 Then click 'Update Map' to display the data.");
 }
 
 function initDatePickers() {
@@ -121,9 +132,62 @@ function initDatePickers() {
   );
 }
 
-function initEmployeeColumn(employeeData) {
-  console.log(employeeData);
+function initTimePickers() {
+  $("#timepickerStart").timepicker({
+      timeFormat: 'HH:mm:ss',
+      interval: 30,
+      minTime: '06:00:00',
+      maxTime: '22:59:59',
+      defaultTime: '',
+      startTime: '06:00:00',
+      dynamic: false,
+      dropdown: true,
+      scrollbar: true,
+      change: function(time) {
+        // 'time' is a Date obj.
+        let inputObj = $(this);
+        let tp = inputObj.timepicker();
 
+        // Don't do anything in this callback for now.
+      }
+  });
+  $("#timepickerEnd").timepicker({
+      timeFormat: 'HH:mm:ss',
+      interval: 30,
+      minTime: '06:00:00',
+      maxTime: '22:59:59',
+      defaultTime: '',
+      startTime: '06:00:00',
+      dynamic: false,
+      dropdown: true,
+      scrollbar: true,
+      change: function(time) {
+        // 'time' is a Date obj.
+        let inputObj = $(this);
+        let tp = inputObj.timepicker();
+
+        // Don't do anything in this callback for now.
+      }
+  });
+
+  // Set the starting times on page load.
+  $("#timepickerStart").val("06:00:00");
+  $("#timepickerEnd").val("07:00:00");
+}
+
+function initMapButton() {
+  let btn = $("#btnUpdateMap");
+
+  // Force the button to map width.
+  btn.width(mapImg.width);
+  btn.css({
+    "maxWidth": mapImg.width
+  });
+  btn.text("Update Map");
+  btn.on("click", onUpdateMap);
+}
+
+function initEmployeeColumn(employeeData) {
   let employeeDropdown = document.getElementById("employee-dropdown");
   let employeeSelect = document.getElementById("employee-list");
 
@@ -149,27 +213,15 @@ function initEmployeeColumn(employeeData) {
     let label = document.createElement("label");
     label.className = "list-group-item";
     let inputLabel = "" + employeeData[i].FirstName + " " + employeeData[i].LastName;
-    label.innerHTML = "<input class=\"form-check-input me-1\" type=\"checkbox\" value=\"\"></input>" + inputLabel
+    label.innerHTML = "<input class=\"form-check-input me-1\" type=\"checkbox\" \
+                        value=\"" + inputLabel + "\" \
+                        onclick=\"updateCheckedEmployees(this)\"></input>" + inputLabel;
     employeeSelect.append(label);
   }
-
-  // Generate a GPSVis when all / single employee selected.
-  employeeDropdown.addEventListener('change', function() {
-    let selectedEmployee;
-    if (this.value == "all") {
-      selectedEmployee = ["All", "Names"];
-    }
-    else {
-      selectedEmployee = this.value.split(" ");
-    }
-    console.log(selectedEmployee);
-    let gpsVis = new GPSVis(g_gpsData, g_employeeData, selectedEmployee);
-    gpsVis.update();
-  });
 }
 
-function populateMapData(gpsData) {
-  // Spawn random points.
+function initMapSvgLayer(gpsData) {
+  // Set up the svg layer based on the min/max data found.
   getCoordMinMax(gpsData).then((value) => {
     // value format:
     // minLat, minLon, maxLat, maxLon
@@ -188,18 +240,16 @@ function populateMapData(gpsData) {
       .translate([mapImg.width / 2, mapImg.height / 2])
       .scale(500000); // TODO not confirmed correct.
 
-    // Set up the svg layer where points will be added.
+    // Create the actual svg layer.
     let svg = mapContainer.append("svg")
       .attr("id", "map-svg")
       .attr("width", mapImg.width)
       .attr("height", mapImg.height)
-      .attr("style", "background: url('" + mapPath + "') no-repeat;background-size: contain;");
+      .attr("style", "background: url('" + mapPath + "') \
+            no-repeat;background-size: contain;");
     svg.lower();
+    // Remove the raster image so data points will be visible.
     mapImg.remove();
-
-    addRandomPoints(gpsData).then((value) => {
-      // Do stuff.
-    });
   });
 }
 
@@ -234,8 +284,7 @@ async function getCoordMinMax(data) {
   return new Array(minLat, minLon, maxLat, maxLon);
 }
 
-async function addRandomPoints(data) {
-  let svg = d3.select("#map-svg");
+async function renderRandomPoints(data) {
   let idx = 0;
   let num1 = Math.floor(Math.random() * data.length);
   let num2 = Math.floor(Math.random() * data.length);
@@ -244,7 +293,7 @@ async function addRandomPoints(data) {
   let num5 = Math.floor(Math.random() * data.length);
   let pts = [];
   for (const item of data) {
-    if (idx === num1 || // Just for testing.
+    if (idx === num1 || // Hard limit to 5 for now.
         idx === num2 ||
         idx === num3 ||
         idx === num4 ||
@@ -258,7 +307,38 @@ async function addRandomPoints(data) {
     }
     idx = idx + 1;
   }
+  addPointsToMap(pts);
+}
 
+async function renderGPSDataToMap(data) {
+  if (data.length > maxDataPoints) {
+    alert("Error: Query larger than " + maxDataPoints +
+      " points. Try a different time range.\n\n(Found " +
+      data.length + " points.)");
+    return;
+  }
+
+  if (data.length < 1) {
+    alert("Error: No results for selected employee(s) and datetime range.");
+    return;
+  }
+
+  // Convert gps data lines to readable point objects.
+  let pts = [];
+  for (const line of data) {
+    var pt = new Object();
+    pt.coord = [Number(line.long), Number(line.lat)];
+    pt.id = line.id;
+    pt.date = line.Timestamp;
+    pts.push(pt);
+  }
+  addPointsToMap(pts);
+  console.log("Pts rendered:");
+  console.log(pts);
+}
+
+function addPointsToMap(pts) {
+  let svg = d3.select("#map-svg");
   /*
    * Tooltip code: https://techblog.assignar.com/plotting-data-points-on-
    * interactive-map-visualisation-using-d3js/
@@ -281,18 +361,19 @@ async function addRandomPoints(data) {
         .data(pts).enter()
         .append("circle")
         .attr("cx", function (d) {
-          console.log("cx: " + d.coord[0]);
-          console.log(projection(d.coord));
+          //console.log("cx: " + d.coord[0]);
+          //console.log(projection(d.coord));
           return projection(d.coord)[0];
         })
         .attr("cy", function (d) {
-          console.log("cy: " + d.coord[1]);
-          console.log(projection(d.coord));
+          //console.log("cy: " + d.coord[1]);
+          //console.log(projection(d.coord));
           return projection(d.coord)[1];
         })
         .attr("r", "10px")
-        .attr("fill", "red")
+        .attr("fill", "red") // TODO Generate unique color per employee.
         .on("mouseover", (e, d) => {
+                             // TODO Display employee name in hover dialog.
           let idText = 'ID: ' + d.id;
           let dateText = '<br>Date: ' + d.date;
           let latText = '<br>Lat: ' + d.coord[1];
@@ -310,4 +391,69 @@ async function addRandomPoints(data) {
           tooltip.text("empty tooltip");
           tooltip.style("visibility", "hidden");
         });
+}
+
+function onUpdateMap() {
+  console.log("'Update Map' clicked.");
+
+  // Clear the SVG data on the map.
+  clearMapDataPoints();
+
+  // Gather employee names.
+  let names = getSelectedEmployees();
+  console.log("Selecting data for the following names:");
+  console.log(names);
+
+  // Gather datetime data from UI state.
+  let fromDate = $("#datepickerFrom").datepicker("getDate");
+  let toDate = $("#datepickerTo").datepicker("getDate");
+  let startTime = $("#timepickerStart").timepicker("getTime");
+  let endTime = $("#timepickerEnd").timepicker("getTime");
+
+  // Filter GPS data based on the UI selections.
+  let queryData = [];
+  names.forEach(name => {
+    let nameArr = name.split(" ");
+    let gpsVis = new GPSVis(g_gpsData, g_employeeData, nameArr);
+    let gpsData = gpsVis.getGPSDataByDateTime(fromDate, toDate, startTime, endTime);
+    queryData = queryData.concat(gpsData);
+  });
+  renderGPSDataToMap(queryData);
+}
+
+function clearMapDataPoints() {
+  let svg = d3.select("#map-svg");
+  svg.selectAll("circle").remove();
+}
+
+function getSelectedEmployees() {
+  // Grab the dropdown name.
+  let dropdownName = $("#employee-dropdown option:selected").text();
+
+  // Grab all other selected names.
+  let selections = [];
+  if (dropdownName == "All Employees") {
+    selections.push(dropdownName);
+  } else {
+    selections = g_CheckedEmployees.slice();
+    if (!selections.includes(dropdownName)) {
+      selections.push(dropdownName);
+    }
+  }
+
+  // Return combined name selections.
+  return selections;
+}
+
+function updateCheckedEmployees(input) {
+  if (input.checked && !g_CheckedEmployees.includes(input.value)) {
+    // Checked and doesn't exist, so add the name.
+    g_CheckedEmployees.push(input.value);
+  }
+  if (!input.checked && g_CheckedEmployees.includes(input.value)) {
+    // Unchecked and exists, so remove the name.
+    g_CheckedEmployees = g_CheckedEmployees.filter(
+      name => name != input.value
+    );
+  }
 }
