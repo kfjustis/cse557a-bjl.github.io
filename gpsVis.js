@@ -55,6 +55,17 @@ GPSVis.prototype.getGPSData = function() {
 }
 
 GPSVis.prototype.getGPSDataByDateTime = function(fromDate, toDate, startTime, endTime) {
+    // Return empty when given invalid data.
+    if (fromDate == null ||
+        toDate == null ||
+        startTime == null ||
+        endTime == null ||
+        toDate.valueOf() < fromDate.valueOf() ||
+        endTime.valueOf() < startTime.valueOf())
+    {
+        return [];
+    }
+
     let self = this;
     console.log("GPSVis: querying datetime range...");
     startTime.setDate(fromDate.getDate());
