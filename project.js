@@ -238,7 +238,8 @@ function initMapSvgLayer(gpsData) {
     projection = d3.geoEquirectangular()
       .center([centerLon, centerLat])
       .translate([mapImg.width / 2, mapImg.height / 2])
-      .scale(500000); // TODO not confirmed correct.
+      .scale(550000); // Compared against Isia Vann route on Jan. 6, 0600-0900.
+                      // Loreto Bodrogi has a similar route to compare against.
 
     // Create the actual svg layer.
     let svg = mapContainer.append("svg")
@@ -370,8 +371,9 @@ function addPointsToMap(pts) {
           //console.log(projection(d.coord));
           return projection(d.coord)[1];
         })
-        .attr("r", "10px")
+        .attr("r", "5px")
         .attr("fill", "red") // TODO Generate unique color per employee.
+        .attr("opacity", 0.1)
         .on("mouseover", (e, d) => {
                              // TODO Display employee name in hover dialog.
           let idText = 'ID: ' + d.id;
