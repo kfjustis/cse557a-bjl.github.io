@@ -380,12 +380,14 @@ function addPointsToMap(pts) {
           // Highlight point.
           $(e.target).attr("style","outline:3px solid blue");
           // Show employee data tooltip.
-                            // TODO Display employee name in hover dialog.
+          let firstName = g_carAssignmentData[d.id-1].FirstName;
+          let lastName = g_carAssignmentData[d.id-1].LastName;
           let idText = 'ID: ' + d.id;
+          let nameText = '<br>Name: ' + firstName + " " + lastName;
           let dateText = '<br>Date: ' + d.date;
           let latText = '<br>Lat: ' + d.coord[1];
           let lonText = '<br>Lon: ' + d.coord[0];
-          tooltip.html(idText + dateText + latText + lonText);
+          tooltip.html(idText + nameText + dateText + latText + lonText);
           tooltip.style("visibility", "visible");
           tooltip.style("top",
             (e.pageY - 10) + "px")
