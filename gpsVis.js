@@ -59,9 +59,7 @@ GPSVis.prototype.getGPSDataByDateTime = function(fromDate, toDate, startTime, en
     if (fromDate == null ||
         toDate == null ||
         startTime == null ||
-        endTime == null ||
-        toDate.valueOf() < fromDate.valueOf() ||
-        endTime.valueOf() < startTime.valueOf())
+        endTime == null)
     {
         return [];
     }
@@ -76,6 +74,12 @@ GPSVis.prototype.getGPSDataByDateTime = function(fromDate, toDate, startTime, en
     endTime.setYear(toDate.getFullYear());
     console.log(startTime);
     console.log(endTime);
+
+    // Allow any times to be compared as long as the end time is further out.
+    if (startTime.valueOf() > endTime.valueOf())
+    {
+        return [];
+    }
 
     let employeeGPSData = self.getGPSData();
     let timeRelevantGPSData = employeeGPSData.filter(filterGPSByDateTime);
