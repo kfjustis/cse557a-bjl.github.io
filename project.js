@@ -419,14 +419,150 @@ function onUpdateMap() {
 
   // Filter GPS data based on the UI selections.
   let queryData = [];
+  let infoTable = document.getElementById("employee-info");
+
+  // Remove all children from Selected Transactions sidebar
+  while (infoTable.firstChild) {
+    infoTable.removeChild(infoTable.firstChild);
+  }
   names.forEach(name => {
     let nameArr = name.split(" ");
     let gpsVis = new GPSVis(g_gpsData, g_employeeData, nameArr);
     let gpsData = gpsVis.getGPSDataByDateTime(fromDate, toDate, startTime, endTime);
+    updateInfoTable(nameArr, startTime, endTime, fromDate, toDate);
+
     queryData = queryData.concat(gpsData);
   });
+
+  let collapsibles = document.getElementsByClassName("collapsible");
+  for (let i = 0; i < collapsibles.length; i++) {
+    collapsibles[i].addEventListener("click", function() {
+      this.classList.toggle("active");
+
+      if (this.nextElementSibling.style.display == "block") {
+        this.nextElementSibling.style.display = "none";
+      }
+      else {
+        this.nextElementSibling.style.display = "block";
+      }
+    });
+  }
   renderGPSDataToMap(queryData);
 }
+
+// Dynamically updates employee info sidebar when map is updated to reflect the employees and timeframe
+function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
+
+  let selectedCC = g_ccData.filter( function(value) {
+    return (value.FirstName == employeeName[0] && value.LastName == employeeName[1])
+  });
+  selectedCC = selectedCC.filter( function(value) {
+    let date = new Date(value.timestamp);
+
+    startTime.setDate(fromDate.getDate());
+    startTime.setMonth(fromDate.getMonth());
+    startTime.setYear(fromDate.getFullYear());
+    endTime.setDate(toDate.getDate());
+    endTime.setMonth(toDate.getMonth());
+    endTime.setYear(toDate.getFullYear());
+
+    return (date.valueOf() >= startTime.valueOf() &&
+    date.valueOf() <= endTime.valueOf());
+  })
+
+  let selectedLoyalty = g_loyaltyData.filter( function(value) {
+    return (value.FirstName == employeeName[0] && value.LastName == employeeName[1])
+  });
+  selectedLoyalty = selectedLoyalty.filter( function(value) {
+    let date = new Date(value.timestamp);
+
+    startTime.setDate(fromDate.getDate());
+    startTime.setMonth(fromDate.getMonth());
+    startTime.setYear(fromDate.getFullYear());
+    endTime.setDate(toDate.getDate());
+    endTime.setMonth(toDate.getMonth());
+    endTime.setYear(toDate.getFullYear());
+
+    return (date.valueOf() >= startTime.valueOf() &&
+    date.valueOf() <= endTime.valueOf());
+  })
+
+  console.log(selectedCC);
+  console.log(selectedLoyalty);
+
+  let uniqueCC = [...new Set(selectedCC.map(x => x.location))];
+
+  let uniqueLoyalty = [...new Set(selectedLoyalty.map(x => x.location))];
+
+  let info = document.createElement("div");
+  let name = document.createTextNode(employeeName[0] + " " + employeeName[1]);
+
+  let ccDiv = document.createElement("div");
+  let ccHeader = document.createTextNode("Credit Card");
+  ccDiv.appendChild(ccHeader);
+
+  for (let i = 0; i < uniqueCC.length; i++) {
+    let locationBtn = document.createElement("button");
+    let id = uniqueCC[i].replace(/\s/g, '');
+    locationBtn.innerHTML = uniqueCC[i];
+    ccDiv.appendChild(locationBtn);
+    locationBtn.setAttribute("class", "collapsible");
+
+    let locationInfo = document.createElement("div");
+    locationInfo.setAttribute("class", "collapsible-content");
+    
+
+    let list = document.createElement("ul");
+    for (let j = 0; j < selectedCC.length; j++) {
+      if (selectedCC[j].location == uniqueCC[i]) {
+        let li = document.createElement("li");
+        li.innerHTML = selectedCC[j].timestamp;
+        list.appendChild(li);
+      }
+    }
+    locationInfo.appendChild(list);
+    ccDiv.appendChild(locationInfo);
+  }
+
+  let loyaltyDiv = document.createElement("div");
+  let loyaltyHeader = document.createTextNode("Loyalty");
+  for (let i = 0; i < uniqueLoyalty.length; i++) {
+
+  }
+  loyaltyDiv.appendChild(loyaltyHeader);
+
+  for (let i = 0; i < uniqueLoyalty.length; i++) {
+    let locationBtn = document.createElement("button");
+    let id = uniqueLoyalty[i].replace(/\s/g, '');
+    locationBtn.innerHTML = uniqueLoyalty[i];
+    loyaltyDiv.appendChild(locationBtn);
+    locationBtn.setAttribute("class", "collapsible");
+
+    let locationInfo = document.createElement("div");
+    locationInfo.setAttribute("class", "collapsible-content");
+    
+
+    let list = document.createElement("ul");
+    for (let j = 0; j < selectedLoyalty.length; j++) {
+      if (selectedLoyalty[j].location == uniqueLoyalty[i]) {
+        let li = document.createElement("li");
+        li.innerHTML = selectedLoyalty[j].timestamp;
+        list.appendChild(li);
+      }
+    }
+    locationInfo.appendChild(list);
+    loyaltyDiv.appendChild(locationInfo);
+  }
+
+  info.appendChild(name);
+  info.appendChild(ccDiv);
+  info.appendChild(loyaltyDiv);
+  document.getElementById("employee-info").appendChild(info);
+
+
+
+}
+
 
 function clearMapDataPoints() {
   let svg = d3.select("#map-svg");
