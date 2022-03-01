@@ -97,8 +97,11 @@ function onDataReady() {
   $("#btnUpdateMap").show();
 
   // Update the page alert now that all loading is done.
-  pageAlert.text("Specify a query by selecting employees and a datetime range. \
-                 Then click 'Update Map' to display the data.");
+  pageAlert.html("Specify a query by selecting employees and a datetime range. \
+                 Then, click 'Update Map' to display the data.<br>Additional \
+                 employees can be added to a query by checking their names on \
+                 the left and clicking 'Update Map'<br>again. The map is limited \
+                 to " + maxDataPoints + " points for any given time range.");
 }
 
 function initDatePickers() {
