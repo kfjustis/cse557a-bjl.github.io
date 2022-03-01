@@ -29,8 +29,7 @@ mapImg.onload = function() {
 }
 
 // Set the page alert to indicate loading...
-const pageAlert = d3.select("#page-alert");
-pageAlert.text("Loading page data...");
+const pageAlertText = d3.select("#page-alert-text");
 
 // Init. page state here that doesn't rely on CSV data.
 $(document).ready(
@@ -97,11 +96,11 @@ function onDataReady() {
   $("#btnUpdateMap").show();
 
   // Update the page alert now that all loading is done.
-  pageAlert.html("Specify a query by selecting employees and a datetime range. \
-                 Then, click 'Update Map' to display the data.<br>Additional \
-                 employees can be added to a query by checking their names on \
-                 the left and clicking 'Update Map'<br>again. The map is limited \
-                 to " + maxDataPoints + " points for any given time range.");
+  pageAlertText.style("white-space", "pre-wrap");
+  pageAlertText.text("Specify a query by selecting employees and a datetime range." +
+    " Then, click 'Update Map' to display the\ndata. Additional employees can be added" +
+    " to a query by checking their names on the left and clicking\n'Update Map' again." +
+    " The map is limited to " + maxDataPoints + " points for any given time range.");
 }
 
 function initDatePickers() {
