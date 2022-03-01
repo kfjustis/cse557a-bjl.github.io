@@ -375,7 +375,10 @@ function addPointsToMap(pts) {
         .attr("fill", "red") // TODO Generate unique color per employee.
         .attr("opacity", 0.1)
         .on("mouseover", (e, d) => {
-                             // TODO Display employee name in hover dialog.
+          // Highlight point.
+          $(e.target).attr("style","outline:3px solid blue");
+          // Show employee data tooltip.
+                            // TODO Display employee name in hover dialog.
           let idText = 'ID: ' + d.id;
           let dateText = '<br>Date: ' + d.date;
           let latText = '<br>Lat: ' + d.coord[1];
@@ -392,6 +395,8 @@ function addPointsToMap(pts) {
           tooltip.raise();
           tooltip.text("empty tooltip");
           tooltip.style("visibility", "hidden");
+          // Unhighlight point.
+          $(e.target).attr("style","outline:0px solid blue");
         });
 }
 
