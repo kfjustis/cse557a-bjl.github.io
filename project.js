@@ -463,7 +463,14 @@ function onUpdateMap() {
 function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
 
   let selectedCC = g_ccData.filter( function(value) {
-    return (value.FirstName == employeeName[0] && value.LastName == employeeName[1])
+    if (employeeName.length == 2) {
+      return (value.FirstName == employeeName[0] && value.LastName == employeeName[1])
+    } else if (employeeName.length == 3) {
+      let combinedLastName = employeeName[1] + " " + employeeName[2];
+      return (value.FirstName == employeeName[0] && value.LastName == combinedLastName);
+    } else {
+      return false;
+    }
   });
   selectedCC = selectedCC.filter( function(value) {
     let date = new Date(value.timestamp);
