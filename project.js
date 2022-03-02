@@ -2,7 +2,7 @@
 const winW = window.innerWidth;
 const winH = window.innerHeight;
 const mapScale = 0.30;
-const maxDataPoints = 10000;
+const maxDataPoints = 80000;
 var centerPt = [0.0, 0.0];
 var projection;
 
@@ -380,8 +380,13 @@ function addPointsToMap(pts) {
           // Highlight point.
           $(e.target).attr("style","outline:3px solid blue");
           // Show employee data tooltip.
-          let firstName = g_carAssignmentData[d.id-1].FirstName;
-          let lastName = g_carAssignmentData[d.id-1].LastName;
+          let firstName = "Unknown";
+          let lastName = " Employee";
+          if (d.id <= 35)
+          {
+            firstName = g_carAssignmentData[d.id-1].FirstName;
+            lastName = g_carAssignmentData[d.id-1].LastName;
+          }
           let idText = 'ID: ' + d.id;
           let nameText = '<br>Name: ' + firstName + " " + lastName;
           let dateText = '<br>Date: ' + d.date;
