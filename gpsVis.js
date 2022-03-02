@@ -43,6 +43,20 @@ GPSVis.prototype.getGPSData = function() {
             if (self.employeeData[i].FirstName == this.selectedEmployee[0] &&
                 self.employeeData[i].LastName == this.selectedEmployee[1]) {
                 employeeID = self.employeeData[i].CarID;
+            } else {
+                // Check for triple names like Sten Sanjorge Jr.
+                if (this.selectedEmployee.length > 2)
+                {
+                    let combinedSelectedName = this.selectedEmployee[0] + " " +
+                                               this.selectedEmployee[1] + " " +
+                                               this.selectedEmployee[2];
+                    let combinedDataName = self.employeeData[i].FirstName + " " +
+                                           self.employeeData[i].LastName;
+                    if (combinedSelectedName == combinedDataName)
+                    {
+                        employeeID = self.employeeData[i].CarID;
+                    }
+                }
             }
         }
 
