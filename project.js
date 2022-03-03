@@ -9,7 +9,7 @@ var projection;
 // Array containing currently-selected employee names.
 var g_CheckedEmployees = [];
 
-// Set up the map.
+// Set up the map container.
 const mapContainer = d3.select("#map-container");
 const mapPath = "./data/MC2-tourist.jpg";
 mapContainer.append("img")
@@ -44,7 +44,9 @@ $(document).ready(
 
 /*
  * Data objects ranked by size; lower index means larger
- * file size.
+ * file size. These vars can be used to access the CSV
+ * data anywhere in the page once they are valid (after
+ * onDataReady() is reached.)
  */
 var g_gpsData;           // 1
 var g_ccData;            // 2
@@ -73,6 +75,10 @@ d3.csv("data/gps.csv")
                   .then(function(employeeData) {
                     g_employeeData = employeeData;
 
+                    /*
+                     * Fire the ready signal. Use as an entry point
+                     * for the rest of the page code.
+                     */
                     onDataReady();
                 });
             });
@@ -135,6 +141,7 @@ function initDatePickers() {
 }
 
 function initTimePickers() {
+  // Again, hard-code the time picker defaults so they don't change.
   $("#timepickerStart").timepicker({
       timeFormat: 'HH:mm:ss',
       interval: 30,
@@ -150,7 +157,9 @@ function initTimePickers() {
         let inputObj = $(this);
         let tp = inputObj.timepicker();
 
-        // Don't do anything in this callback for now.
+        /* We don't want any logic to fire when the time picker changes
+         * so leave this blank.
+         */
       }
   });
   $("#timepickerEnd").timepicker({
@@ -168,11 +177,13 @@ function initTimePickers() {
         let inputObj = $(this);
         let tp = inputObj.timepicker();
 
-        // Don't do anything in this callback for now.
+        /* We don't want any logic to fire when the time picker changes
+         * so leave this blank.
+         */
       }
   });
 
-  // Set the starting times on page load.
+  // Set the default time range on page load.
   $("#timepickerStart").val("06:00:00");
   $("#timepickerEnd").val("07:00:00");
 }
@@ -180,12 +191,14 @@ function initTimePickers() {
 function initMapButton() {
   let btn = $("#btnUpdateMap");
 
-  // Force the button to map width.
+  // Force the button to the map width.
   btn.width(mapImg.width);
   btn.css({
     "maxWidth": mapImg.width
   });
   btn.text("Update Map");
+
+  // Connect the callback for running queries to the button.
   btn.on("click", onUpdateMap);
 }
 
@@ -287,6 +300,9 @@ async function getCoordMinMax(data) {
   return new Array(minLat, minLon, maxLat, maxLon);
 }
 
+/* Debug function used for testing point rendering.
+ * Just adds five random data points to the map.
+ */
 async function renderRandomPoints(data) {
   let idx = 0;
   let num1 = Math.floor(Math.random() * data.length);
@@ -296,12 +312,15 @@ async function renderRandomPoints(data) {
   let num5 = Math.floor(Math.random() * data.length);
   let pts = [];
   for (const item of data) {
-    if (idx === num1 || // Hard limit to 5 for now.
+    if (idx === num1 || // Hard limit to 5 for testing.
         idx === num2 ||
         idx === num3 ||
         idx === num4 ||
         idx === num5)
     {
+      /* Store metadata on the point object so the hover dialog
+       * can display it.
+       */
       var pt = new Object();
       pt.coord = [Number(item.long), Number(item.lat)];
       pt.id = item.id;
@@ -314,6 +333,7 @@ async function renderRandomPoints(data) {
 }
 
 async function renderGPSDataToMap(data) {
+  // Prevent the browser tab from crashing on huge data sizes.
   if (data.length > maxDataPoints) {
     alert("Error: Query larger than " + maxDataPoints +
       " points. Try a different time range.\n\n(Found " +
@@ -321,6 +341,7 @@ async function renderGPSDataToMap(data) {
     return;
   }
 
+  // Display error when query finishes with no results.
   if (data.length < 1) {
     alert("Error: No results for selected employee(s) and datetime range.");
     return;
@@ -360,6 +381,7 @@ function addPointsToMap(pts) {
     .style("visibility", "hidden")
     .text("empty tooltip");
 
+  // Add the data point circles to the DOM.
   svg.selectAll("circle")
         .data(pts).enter()
         .append("circle")
@@ -373,12 +395,15 @@ function addPointsToMap(pts) {
           //console.log(projection(d.coord));
           return projection(d.coord)[1];
         })
-        .attr("r", "5px")
-        .attr("fill", "red") // TODO Generate unique color per employee.
-        .attr("opacity", 0.1)
+        .attr("r", "5px")    // Set circle radius.
+        .attr("fill", "red") // Set circle color.
+        .attr("opacity", 0.1) // Opacity works like a heatmap.
         .on("mouseover", (e, d) => {
-          // Highlight point.
+          // Display data point info on hover.
+
+          // Highlight point when hovered.
           $(e.target).attr("style","outline:3px solid blue");
+
           // Show employee data tooltip.
           let firstName = "Unknown";
           let lastName = " Employee";
@@ -401,9 +426,11 @@ function addPointsToMap(pts) {
           return tooltip;
         })
         .on("mouseleave", (e, d) => {
+          // When mouse leaves, undo all of the hover rendering.
           tooltip.raise();
           tooltip.text("empty tooltip");
           tooltip.style("visibility", "hidden");
+
           // Unhighlight point.
           $(e.target).attr("style","outline:0px solid blue");
         });
@@ -430,7 +457,9 @@ function onUpdateMap() {
   let queryData = [];
   let infoTable = document.getElementById("employee-info");
 
-  // Remove all children from Selected Transactions sidebar
+  /* Remove all children from Selected Transactions sidebar
+   * and update with new data from query.
+   */
   while (infoTable.firstChild) {
     infoTable.removeChild(infoTable.firstChild);
   }
@@ -443,6 +472,7 @@ function onUpdateMap() {
     queryData = queryData.concat(gpsData);
   });
 
+  // Style any new collapsible elements for the right-hand panel.
   let collapsibles = document.getElementsByClassName("collapsible");
   for (let i = 0; i < collapsibles.length; i++) {
     collapsibles[i].addEventListener("click", function() {
@@ -456,12 +486,15 @@ function onUpdateMap() {
       }
     });
   }
+
+  // Render the found data.
   renderGPSDataToMap(queryData);
 }
 
 // Dynamically updates employee info sidebar when map is updated to reflect the employees and timeframe
+// Checks for loyalty and credit card data for the given employee.
 function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
-
+  // Find the relevant CC data.
   let selectedCC = g_ccData.filter( function(value) {
     if (employeeName.length == 2) {
       return (value.FirstName == employeeName[0] && value.LastName == employeeName[1])
@@ -486,6 +519,7 @@ function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
     date.valueOf() <= endTime.valueOf());
   })
 
+  // Find the relevant loyalty data.
   let selectedLoyalty = g_loyaltyData.filter( function(value) {
     if (employeeName.length == 2) {
       return (value.FirstName == employeeName[0] && value.LastName == employeeName[1])
@@ -514,9 +548,7 @@ function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
   console.log(selectedLoyalty);
 
   let uniqueCC = [...new Set(selectedCC.map(x => x.location))];
-
   let uniqueLoyalty = [...new Set(selectedLoyalty.map(x => x.location))];
-
   let info = document.createElement("div");
   let name = document.createTextNode(employeeName[0] + " " + employeeName[1]);
 
@@ -524,6 +556,7 @@ function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
   let ccHeader = document.createTextNode("Credit Card");
   ccDiv.appendChild(ccHeader);
 
+  // Create the UI elements for the found CC and loyalty data.
   for (let i = 0; i < uniqueCC.length; i++) {
     let locationBtn = document.createElement("button");
     let id = uniqueCC[i].replace(/\s/g, '');
@@ -574,13 +607,11 @@ function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
     loyaltyDiv.appendChild(locationInfo);
   }
 
+  // Add the found data to the right-hand panel.
   info.appendChild(name);
   info.appendChild(ccDiv);
   info.appendChild(loyaltyDiv);
   document.getElementById("employee-info").appendChild(info);
-
-
-
 }
 
 
