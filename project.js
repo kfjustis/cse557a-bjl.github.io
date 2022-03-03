@@ -549,9 +549,6 @@ function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
 
   let loyaltyDiv = document.createElement("div");
   let loyaltyHeader = document.createTextNode("Loyalty");
-  for (let i = 0; i < uniqueLoyalty.length; i++) {
-
-  }
   loyaltyDiv.appendChild(loyaltyHeader);
 
   for (let i = 0; i < uniqueLoyalty.length; i++) {
