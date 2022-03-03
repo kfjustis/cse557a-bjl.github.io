@@ -539,7 +539,7 @@ function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
     for (let j = 0; j < selectedCC.length; j++) {
       if (selectedCC[j].location == uniqueCC[i]) {
         let li = document.createElement("li");
-        li.innerHTML = selectedCC[j].timestamp;
+        li.innerHTML = selectedCC[j].timestamp + " " + selectedCC[j].price;
         list.appendChild(li);
       }
     }
@@ -569,7 +569,7 @@ function updateInfoTable(employeeName, startTime, endTime, fromDate, toDate) {
     for (let j = 0; j < selectedLoyalty.length; j++) {
       if (selectedLoyalty[j].location == uniqueLoyalty[i]) {
         let li = document.createElement("li");
-        li.innerHTML = selectedLoyalty[j].timestamp;
+        li.innerHTML = selectedLoyalty[j].timestamp + " " + selectedLoyalty[j].price;
         list.appendChild(li);
       }
     }
